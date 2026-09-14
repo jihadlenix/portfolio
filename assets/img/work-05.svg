@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="800" height="500" role="img" aria-hidden="true">
+<defs>
+<radialGradient id="g5" cx="50%" cy="45%" r="70%">
+<stop offset="0%" stop-color="#141024"/><stop offset="100%" stop-color="#07070E"/>
+</radialGradient>
+<filter id="b5" x="-30%" y="-30%" width="160%" height="160%">
+<feGaussianBlur stdDeviation="7"/>
+</filter>
+</defs>
+<rect width="800" height="500" fill="url(#g5)"/>
+<path d="M -10 50 C 240.0 50, 360.0 250.0, 810 235.0" fill="none" stroke="#7C3AED" stroke-opacity="0.50" stroke-width="2.2"/><circle cx="40" cy="50" r="5" fill="#A78BFA" fill-opacity=".85"/><path d="M -10 120 C 240.0 120, 360.0 250.0, 810 241.0" fill="none" stroke="#7C3AED" stroke-opacity="0.45" stroke-width="2.0"/><circle cx="40" cy="120" r="5" fill="#A78BFA" fill-opacity=".85"/><path d="M -10 190 C 240.0 190, 360.0 250.0, 810 247.0" fill="none" stroke="#7C3AED" stroke-opacity="0.40" stroke-width="1.8"/><circle cx="40" cy="190" r="5" fill="#A78BFA" fill-opacity=".85"/><path d="M -10 260 C 240.0 260, 360.0 250.0, 810 253.0" fill="none" stroke="#7C3AED" stroke-opacity="0.35" stroke-width="1.6"/><circle cx="40" cy="260" r="5" fill="#A78BFA" fill-opacity=".85"/><path d="M -10 330 C 240.0 330, 360.0 250.0, 810 259.0" fill="none" stroke="#7C3AED" stroke-opacity="0.30" stroke-width="1.4"/><circle cx="40" cy="330" r="5" fill="#A78BFA" fill-opacity=".85"/><path d="M -10 400 C 240.0 400, 360.0 250.0, 810 265.0" fill="none" stroke="#7C3AED" stroke-opacity="0.25" stroke-width="1.2"/><circle cx="40" cy="400" r="5" fill="#A78BFA" fill-opacity=".85"/><g filter="url(#b5)"><ellipse cx="710" cy="250.0" rx="46" ry="26" fill="#8B5CF6" fill-opacity=".45"/></g><rect x="670" y="220.0" width="86" height="60" fill="none" stroke="#A78BFA" stroke-opacity=".55"/><line x1="682" y1="234.0" x2="724" y2="234.0" stroke="#A78BFA" stroke-opacity=".5"/><line x1="682" y1="245.0" x2="744" y2="245.0" stroke="#A78BFA" stroke-opacity=".5"/><line x1="682" y1="256.0" x2="724" y2="256.0" stroke="#A78BFA" stroke-opacity=".5"/><line x1="682" y1="267.0" x2="744" y2="267.0" stroke="#A78BFA" stroke-opacity=".5"/></svg>
