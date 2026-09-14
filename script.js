@@ -573,9 +573,34 @@
     if (!pin || !track) return;
 
     var scrubbable = false;
+    /* Loading is not the same as being seekable. A host that does not answer
+       HTTP Range requests still serves the whole file, so the clip decodes and
+       reports a duration, but currentTime can never move and the section would
+       sit frozen on its first frame for the entire pin. When that happens the
+       clip is played on a loop instead: not the intended scrub, but alive and
+       on-brief rather than looking broken. */
+    function canSeek() {
+      return !!(video && video.seekable && video.seekable.length && video.seekable.end(0) > 0.5);
+    }
+
+    function useLoopInstead() {
+      scrubbable = false;
+      if (!video) return;
+      video.loop = true;
+      var p = video.play();
+      if (p && p.catch) p.catch(function () {});
+    }
+
     guardVideo(video, media, {
       timeout: 3400,
-      onReady: function () { scrubbable = true; },
+      onReady: function () {
+        if (canSeek()) { scrubbable = true; return; }
+        /* seekable can populate slightly after the data does */
+        window.setTimeout(function () {
+          if (canSeek()) scrubbable = true;
+          else useLoopInstead();
+        }, 400);
+      },
       onFallback: function () { scrubbable = false; initSequenceFallback(); }
     });
     lazyLoadVideo(video);
@@ -652,7 +677,10 @@
        seeking for them. Measured over a nudge-then-stop: 38 seeks (29 of them
        landing on a frame already displayed) became 9, for the same 9 frames. */
     gsap.ticker.add(function () {
-      if (!pinActive || !scrubbable || !video || !video.duration) return;
+      if (!scrubbable || !video || !video.duration) return;
+      /* Keep converging for a moment after the pin releases, otherwise leaving
+         the section at speed strands the clip mid-catch-up. */
+      if (!pinActive && Math.abs(targetTime - currentTime) < FRAME) return;
 
       currentTime += (targetTime - currentTime) * 0.16;
 

@@ -37,6 +37,27 @@ assets/
 BUILD-PLAN.md   the full creative brief and implementation spec
 ```
 
+## Hosting
+
+The scrubbed scene needs a host that answers **HTTP Range requests** (`206
+Partial Content`). Verified behaviour:
+
+| Host | Range | Scrub |
+|---|---|---|
+| Cloudflare **Pages** | yes | works |
+| Cloudflare **Workers** static assets | **no** | falls back to loop |
+| Netlify, Vercel, GitHub Pages, S3/CloudFront | yes | works |
+
+Check any new host before trusting it:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}
+" -H "Range: bytes=0-100"   https://YOUR-HOST/assets/video/scene-02-architect.webm
+```
+
+`206` is correct. A `200` means the whole file came back and seeking is
+impossible, so the Pillars scene plays on a loop instead of scrubbing.
+
 ## Notes on the build
 
 - **Everything degrades.** The site is fully readable with JavaScript disabled,
