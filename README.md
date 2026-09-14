@@ -1,4 +1,4 @@
-# Jihad Maasarani — Portfolio
+# Jihad Maasarani · Portfolio
 
 A single-page, scroll-driven cinematic portfolio. No framework, no build step:
 hand-written HTML, CSS and vanilla JavaScript, with GSAP, ScrollTrigger and Lenis
@@ -10,8 +10,8 @@ loaded from a CDN.
 
 ## Running locally
 
-The site is static, but it needs a server that answers **HTTP Range requests** —
-without them a `<video>` reports an empty `seekable` range and the scroll-scrubbed
+The site is static, but it needs a server that answers **HTTP Range requests**.
+Without them a `<video>` reports an empty `seekable` range and the scroll-scrubbed
 scene in the Pillars section silently stops working while everything else still
 looks correct. Python's `http.server` does not implement Range, so this repo ships
 a small dev server that does:
@@ -41,7 +41,7 @@ BUILD-PLAN.md   the full creative brief and implementation spec
 
 - **Everything degrades.** The site is fully readable with JavaScript disabled,
   fully usable under `prefers-reduced-motion`, and fully presentable with every
-  video file deleted — each scene falls back to a poster frame.
+  video file deleted. Each scene falls back to a poster frame.
 - **Scene 02 is encoded differently** from the other two. It is scroll-scrubbed,
   so it uses a dense keyframe interval (one every 6 frames) to keep seeking cheap,
   and is delivered at 720p because it sits at 45% opacity behind a scrim.

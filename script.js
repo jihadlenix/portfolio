@@ -1004,6 +1004,96 @@
   }
 
   /* ──────────────────────────────────────────────── 21 · BOOT ── */
+  /* ──────────────────────────────── 17b · CONTINUOUS FLOW ── */
+  /* Most reveals fire once and then stop, which left long stretches of the
+     page where scrolling produced no visible change at all — the back half
+     was over five screens of static content. These drifts are scrubbed, so
+     something is always responding to the scroll position.
+
+     Parallax uses yPercent while the reveals use y. GSAP composes both into
+     one transform, so the two never fight over the same property. */
+  function initFlow() {
+    if (REDUCED) return;
+
+    function drift(el, from, to, trigger) {
+      if (!el) return;
+      gsap.fromTo(el,
+        { yPercent: from },
+        {
+          yPercent: to,
+          ease: "none",
+          scrollTrigger: {
+            trigger: trigger || el,
+            start: "top bottom",
+            end: "bottom top",
+            scrub: true
+          }
+        });
+    }
+
+    /* Section headings lead the content slightly. */
+    $$(".sec-head").forEach(function (head) {
+      var section = head.closest("section");
+      drift(head, 4, -4, section);
+    });
+
+    drift($(".stats__grid"), 5, -5, $("#stats"));
+
+    /* Work: the two feature cards and the grid move at different rates so the
+       section has depth rather than sliding as one block. */
+    var work = $("#work");
+    $$(".work__feature .card--lg").forEach(function (card, i) {
+      drift(card, i ? 4 : 8, i ? -4 : -8, work);
+    });
+    $$(".work__grid .card").forEach(function (card, i) {
+      drift(card, i % 2 ? 6 : 3, i % 2 ? -6 : -3, work);
+    });
+    drift($(".work__list"), 4, -4, work);
+
+    /* Credentials: the columns separate slightly as they pass. */
+    $$(".creds__col").forEach(function (col, i) {
+      drift(col, i ? 3 : 6, i ? -3 : -6, $("#credentials"));
+    });
+
+    drift($("#timeline"), 4, -4, $("#story"));
+
+    $$(".caps__grid .cap").forEach(function (cap, i) {
+      drift(cap, 3 + i * 2, -(3 + i * 2), $("#capabilities"));
+    });
+
+    drift($(".cta__inner"), 5, -5, $("#cta"));
+
+    /* Below the desktop breakpoint neither the mission nor the pillars are
+       pinned, so both sections lose their scrubbed triggers and become a long
+       static run. These stand in for them. */
+    gsap.matchMedia().add("(max-width: 1023px)", function () {
+      drift($(".mission__inner"), 5, -5, $("#mission"));
+      $$(".pillar").forEach(function (pillar, i) {
+        drift($(".pillar__inner", pillar), 4 + i, -(4 + i), pillar);
+      });
+    });
+
+
+    /* The handover between the two pinned sections: the mission pin has
+       released but the pillars pin has not caught yet, which left about a
+       screen of scroll with nothing scrubbed. The glow carries it across. */
+    var glow = $("#missionGlow");
+    if (glow) {
+      gsap.fromTo(glow,
+        { yPercent: 10 },
+        {
+          yPercent: -10,
+          ease: "none",
+          scrollTrigger: {
+            trigger: "#mission",
+            start: "top top",
+            end: "bottom top",
+            scrub: true
+          }
+        });
+    }
+  }
+
   function boot() {
     if (!window.gsap || !window.ScrollTrigger) {
       // Without GSAP the markup still reads correctly — reveal everything.
@@ -1030,6 +1120,7 @@
     initWork();
     initCreds();
     initCta();
+    initFlow();
     initFooter();
     initMagnetic();
     initResize();
