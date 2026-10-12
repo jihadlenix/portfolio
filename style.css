@@ -1042,37 +1042,6 @@ html:not(.js-enabled) .preloader { display: none; }
   .tl:nth-child(odd) .tl__card { text-align: right; }
   .tl:nth-child(odd) .tl__card p { margin-left: auto; }
 
-  /* pillars become a pinned horizontal track */
-  .pillars__pin { height: 100svh; }
-  .pillars__track {
-    display: flex;
-    height: 100%;
-    align-items: center;
-    will-change: transform;
-  }
-  .pillar {
-    flex: 0 0 100vw;
-    width: 100vw;
-    padding-block: 0;
-    display: flex;
-    align-items: center;
-  }
-  .pillar__inner { max-width: 720px; }
-
-  .pillars__index {
-    display: block;
-    position: absolute;
-    top: 16vh; right: var(--gutter);
-    z-index: 2;
-    font-family: var(--ff-display);
-    font-size: clamp(3rem, 7vw, 7rem);
-    line-height: 1;
-    color: transparent;
-    -webkit-text-stroke: 1px rgba(139, 92, 246, 0.5);
-  }
-  .pidx { position: absolute; top: 0; right: 0; opacity: 0; filter: blur(12px); }
-  .pidx.is-active { opacity: 1; filter: blur(0); }
-
   /* section rail */
   .rail {
     display: grid;
@@ -1174,4 +1143,41 @@ html:not(.js-enabled) .preloader { display: none; }
   .stats__rule { transform: scaleX(1); }
   .preloader { display: none !important; }
   .mission__glow { opacity: 0.22; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* The pinned horizontal track needs real width. At 1024 the content column is
+   only 720px and each pillar slides a full viewport across, so on a small
+   laptop you spend most of the section reading text that is half off-screen.
+   Below 1200 the pillars simply stack. */
+@media (min-width: 1200px) {
+  /* pillars become a pinned horizontal track */
+  .pillars__pin { height: 100svh; }
+  .pillars__track {
+    display: flex;
+    height: 100%;
+    align-items: center;
+    will-change: transform;
+  }
+  .pillar {
+    flex: 0 0 100vw;
+    width: 100vw;
+    padding-block: 0;
+    display: flex;
+    align-items: center;
+  }
+  .pillar__inner { max-width: 720px; }
+
+  .pillars__index {
+    display: block;
+    position: absolute;
+    top: 16vh; right: var(--gutter);
+    z-index: 2;
+    font-family: var(--ff-display);
+    font-size: clamp(3rem, 7vw, 7rem);
+    line-height: 1;
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(139, 92, 246, 0.5);
+  }
+  .pidx { position: absolute; top: 0; right: 0; opacity: 0; filter: blur(12px); }
+  .pidx.is-active { opacity: 1; filter: blur(0); }
 }

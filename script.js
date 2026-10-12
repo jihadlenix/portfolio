@@ -18,7 +18,8 @@
   };
 
   var REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  var DESKTOP = "(min-width: 1024px)";
+  /* The pillars pin needs real width; below this they stack. */
+  var DESKTOP = "(min-width: 1200px)";
   var HOVERABLE = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
 
   var conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
