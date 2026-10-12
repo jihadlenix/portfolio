@@ -1007,6 +1007,9 @@ html:not(.js-enabled) .preloader { display: none; }
 @media (min-width: 768px) {
   .stats__grid { grid-template-columns: repeat(3, 1fr); }
   .work__grid { grid-template-columns: repeat(2, 1fr); }
+  /* Seven work items means the grid can end on a lone card. Let the orphan
+     fill its row instead of sitting next to an empty cell. */
+  .work__grid .card:last-child:nth-child(odd) { grid-column: 1 / -1; }
   .caps__grid { grid-template-columns: repeat(2, 1fr); }
   .creds__cols { grid-template-columns: repeat(2, 1fr); }
   .sec-head--split {
@@ -1153,6 +1156,8 @@ html:not(.js-enabled) .preloader { display: none; }
 @media (min-width: 1280px) {
   .work__feature { grid-template-columns: repeat(2, 1fr); }
   .work__grid { grid-template-columns: repeat(4, 1fr); }
+  .work__grid .card:last-child:nth-child(odd) { grid-column: auto; }
+  .work__grid .card:last-child:nth-child(4n + 1) { grid-column: 1 / -1; }
   /* the lead capability carries more weight than the two beside it */
   .caps__grid { grid-template-columns: 1.35fr 1fr 1fr; }
   .card--lg .card__media { aspect-ratio: 16 / 9; }
