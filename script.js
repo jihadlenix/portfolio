@@ -42,8 +42,8 @@
       touchMultiplier: 1.8,
       /* A higher lerp settles sooner: the page comes to rest almost as soon as
          the wheel stops, so a text section can actually be read mid-scroll. */
-      wheelMultiplier: 1.15,
-      lerp: 0.16
+      wheelMultiplier: 1.1,
+      lerp: 0.26
     });
 
     lenis.on("scroll", ScrollTrigger.update);
@@ -119,6 +119,32 @@
   }
 
   /* Lazily hand `preload="none"` clips their download when they approach. */
+  /* Decoding a scene nobody can see is pure waste, and three of them playing at
+     once off-screen is a real slice of the frame budget. */
+  function playWhenVisible(video) {
+    if (!video || REDUCED) return;
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) {
+          var p = video.play();
+          if (p && p.catch) p.catch(function () {});
+        } else {
+          try { video.pause(); } catch (err) {}
+        }
+      });
+    }, { rootMargin: "25% 0px", threshold: 0.01 });
+    io.observe(video);
+
+    document.addEventListener("visibilitychange", function () {
+      if (document.hidden) return;
+      var r = video.getBoundingClientRect();
+      if (r.top < window.innerHeight && r.bottom > 0) {
+        var p = video.play();
+        if (p && p.catch) p.catch(function () {});
+      }
+    });
+  }
+
   function lazyLoadVideo(video) {
     if (!video || LIGHT_DATA || REDUCED) return;
     var io = new IntersectionObserver(function (entries) {
@@ -572,48 +598,16 @@
     var idx = $$(".pidx");
     if (!pin || !track) return;
 
-    var scrubbable = false;
-    /* Loading is not the same as being seekable. A host that does not answer
-       HTTP Range requests still serves the whole file, so the clip decodes and
-       reports a duration, but currentTime can never move and the section would
-       sit frozen on its first frame for the entire pin. When that happens the
-       clip is played on a loop instead: not the intended scrub, but alive and
-       on-brief rather than looking broken. */
-    function canSeek() {
-      return !!(video && video.seekable && video.seekable.length && video.seekable.end(0) > 0.5);
-    }
-
-    function useLoopInstead() {
-      scrubbable = false;
-      if (!video) return;
-      video.loop = true;
-      var p = video.play();
-      if (p && p.catch) p.catch(function () {});
-    }
-
-    guardVideo(video, media, {
-      timeout: 3400,
-      onReady: function () {
-        if (canSeek()) { scrubbable = true; return; }
-        /* seekable can populate slightly after the data does */
-        window.setTimeout(function () {
-          if (canSeek()) scrubbable = true;
-          else useLoopInstead();
-        }, 400);
-      },
-      onFallback: function () { scrubbable = false; initSequenceFallback(); }
-    });
-    lazyLoadVideo(video);
+    /* This scene used to be scrubbed against scroll position, which meant a
+       video seek on every frame. It plays now. The section keeps its pin. */
+    guardVideo(video, media, { timeout: 4000 });
+    playWhenVisible(video);
 
     if (REDUCED) return;
 
     /* Declared before the pin is created: ScrollTrigger can fire onToggle
        during setup when the page loads already scrolled into this section,
        and a later initialiser would wipe that out. */
-    var FRAME = 1 / 24;
-    var targetTime = 0, currentTime = 0;
-    var lastFrame = -1;
-    var pinActive = false;
 
     var mm = gsap.matchMedia();
 
@@ -626,7 +620,6 @@
         /* Shorter than the track is wide: the pillars travel further per pixel
            scrolled, so the section reads as paced rather than sticky. */
         end: function () { return "+=" + distance() * 0.6; },
-        onToggle: function (self) { pinActive = self.isActive; },
         pin: true,
         pinSpacing: true,
         anticipatePin: 1,
@@ -638,7 +631,6 @@
           var active = Math.min(pillars.length - 1, Math.floor(self.progress * pillars.length + 0.15));
           idx.forEach(function (n, i) { n.classList.toggle("is-active", i === active); });
 
-          if (scrubbable && video.duration) targetTime = self.progress * video.duration;
         }
       });
 
@@ -661,94 +653,6 @@
         });
       });
     });
-
-    /* Lerped video scrub.
-
-       Seeking is the single most expensive thing on the page: every write to
-       currentTime makes the decoder seek and decode. The clip is 24fps, so a
-       write finer than 1/24s cannot change what is on screen — it is wasted
-       work. Writes are therefore quantised to the frame grid, issued only when
-       the frame index actually changes, and never while a previous seek is
-       still in flight.
-
-       During a fast scrub this changes little, because most ticks genuinely
-       advance a frame. It matters when the scroll slows or stops — the lerp
-       keeps making sub-frame movements, and the old sub-frame threshold kept
-       seeking for them. Measured over a nudge-then-stop: 38 seeks (29 of them
-       landing on a frame already displayed) became 9, for the same 9 frames. */
-    gsap.ticker.add(function () {
-      if (!scrubbable || !video || !video.duration) return;
-      /* Keep converging for a moment after the pin releases, otherwise leaving
-         the section at speed strands the clip mid-catch-up. */
-      if (!pinActive && Math.abs(targetTime - currentTime) < FRAME) return;
-
-      currentTime += (targetTime - currentTime) * 0.16;
-
-      var frameIndex = Math.round(currentTime / FRAME);
-      if (frameIndex === lastFrame) return;
-      if (video.seeking) return;
-
-      lastFrame = frameIndex;
-      try { video.currentTime = Math.min(frameIndex * FRAME, video.duration - FRAME); } catch (e) {}
-    });
-
-    /* Image-sequence fallback: used only when the frames are present. */
-    function initSequenceFallback() {
-      var first = new Image();
-      first.src = "assets/seq/pillars-0001.webp";
-      first.onload = function () { buildSequence(); };
-      first.onerror = function () { /* no frames on disk — poster stands in */ };
-
-      function buildSequence() {
-        var TOTAL = 60;
-        var canvas = document.createElement("canvas");
-        canvas.className = "pillars__video";
-        canvas.setAttribute("aria-hidden", "true");
-        media.insertBefore(canvas, media.firstChild);
-        media.classList.remove("is-static");
-
-        var ctx = canvas.getContext("2d");
-        var frames = [];
-        var loaded = 0;
-
-        function size() {
-          var dpr = Math.min(window.devicePixelRatio || 1, 2);
-          canvas.width = Math.round(media.offsetWidth * dpr);
-          canvas.height = Math.round(media.offsetHeight * dpr);
-        }
-        size();
-        window.addEventListener("resize", size);
-
-        function draw(i) {
-          var img = frames[Math.max(0, Math.min(TOTAL - 1, i))];
-          if (!img || !img.complete) return;
-          var s = Math.max(canvas.width / img.width, canvas.height / img.height);
-          var w = img.width * s, h = img.height * s;
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(img, (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
-        }
-
-        function load(i, eager) {
-          var img = new Image();
-          img.src = "assets/seq/pillars-" + String(i + 1).padStart(4, "0") + ".webp";
-          img.onload = function () { if (++loaded === 1) draw(0); };
-          frames[i] = img;
-          if (!eager) return;
-        }
-
-        for (var i = 0; i < 12; i++) load(i, true);
-        var idle = window.requestIdleCallback || function (fn) { return setTimeout(fn, 200); };
-        idle(function () { for (var j = 12; j < TOTAL; j++) load(j, false); });
-
-        ScrollTrigger.create({
-          trigger: pin,
-          start: "top top",
-          end: function () { return "+=" + (track.scrollWidth - window.innerWidth) * 0.72; },
-          scrub: true,
-          onUpdate: function (self) { draw(Math.round(self.progress * (TOTAL - 1))); }
-        });
-      }
-    }
   }
 
   /* ────────────────────────────────────────────── 13 · STORY ── */
@@ -915,6 +819,7 @@
     var toast = $("#toast");
 
     guardVideo(video, media, { timeout: 3400 });
+    playWhenVisible(video);
     lazyLoadVideo(video);
 
     if (video && !LIGHT_DATA && !REDUCED) {
@@ -1060,34 +965,15 @@
     }
 
     /* Section headings lead the content slightly. */
-    $$(".sec-head").forEach(function (head) {
-      var section = head.closest("section");
-      drift(head, 4, -4, section);
-    });
-
-    drift($(".stats__grid"), 5, -5, $("#stats"));
-
-    /* Work: the two feature cards and the grid move at different rates so the
-       section has depth rather than sliding as one block. */
-    var work = $("#work");
-    $$(".work__feature .card--lg").forEach(function (card, i) {
-      drift(card, i ? 4 : 8, i ? -4 : -8, work);
-    });
-    $$(".work__grid .card").forEach(function (card, i) {
-      drift(card, i % 2 ? 6 : 3, i % 2 ? -6 : -3, work);
-    });
-    drift($(".work__list"), 4, -4, work);
-
-    /* Credentials: the columns separate slightly as they pass. */
-    $$(".creds__col").forEach(function (col, i) {
-      drift(col, i ? 3 : 6, i ? -3 : -6, $("#credentials"));
-    });
-
-    drift($("#timeline"), 4, -4, $("#story"));
-
-    $$(".caps__grid .cap").forEach(function (cap, i) {
-      drift(cap, 3 + i * 2, -(3 + i * 2), $("#capabilities"));
-    });
+    /* One drift per section. Per-card parallax meant twenty-odd scrubbed
+       triggers each writing a transform every frame, for motion nobody could
+       actually see. */
+    drift($(".stats__grid"), 4, -4, $("#stats"));
+    drift($("#timeline"), 3, -3, $("#story"));
+    drift($(".caps__grid"), 4, -4, $("#capabilities"));
+    drift($(".work__feature"), 5, -5, $("#work"));
+    drift($(".work__grid"), 3, -3, $("#work"));
+    drift($(".creds__cols"), 4, -4, $("#credentials"));
 
     drift($(".cta__inner"), 5, -5, $("#cta"));
 

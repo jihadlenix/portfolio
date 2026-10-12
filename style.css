@@ -101,7 +101,7 @@ html.js-enabled body.is-locked { overflow: hidden; height: 100%; }
 .display--m  { font-size: var(--fs-display-m); }
 
 .line { display: block; overflow: hidden; padding-bottom: 0.04em; }
-.line-inner { display: block; will-change: transform; }
+.line-inner { display: block; }
 
 .kicker {
   font-family: var(--ff-mono);
@@ -155,23 +155,9 @@ em { font-style: normal; }
   background-image: url("assets/img/grain.png");
   background-size: 128px 128px;
   opacity: var(--grain-op);
-  mix-blend-mode: overlay;
-  will-change: transform;
-  animation: grainShift 0.9s steps(8) infinite;
 }
-/* transform, not background-position: shifting the tile repainted a
+/* Static. It used to animate and blend, which repainted a full-viewport
    full-viewport blended layer eight times a second. */
-@keyframes grainShift {
-  0%   { transform: translate3d(  0px,   0px, 0); }
-  12%  { transform: translate3d(-22px,  14px, 0); }
-  25%  { transform: translate3d( 18px, -26px, 0); }
-  37%  { transform: translate3d(-30px, -12px, 0); }
-  50%  { transform: translate3d( 26px,  22px, 0); }
-  62%  { transform: translate3d(-14px,  30px, 0); }
-  75%  { transform: translate3d( 32px,  -8px, 0); }
-  87%  { transform: translate3d(-26px, -30px, 0); }
-  100% { transform: translate3d(  0px,   0px, 0); }
-}
 
 .vignette {
   position: fixed;
@@ -192,7 +178,6 @@ em { font-style: normal; }
   padding: 10px 20px;
   border: 1px solid var(--violet-400);
   background: rgba(10, 10, 18, 0.92);
-  backdrop-filter: blur(10px);
   color: var(--violet-300);
   font-family: var(--ff-mono);
   font-size: var(--fs-label);
@@ -214,8 +199,6 @@ em { font-style: normal; }
 .header.is-hidden { transform: translateY(-104%); }
 .header.is-solid {
   background: rgba(4, 4, 10, 0.55);
-  backdrop-filter: blur(var(--blur-nav));
-  -webkit-backdrop-filter: blur(var(--blur-nav));
   border-bottom: 1px solid var(--hairline-lo);
 }
 
@@ -484,7 +467,7 @@ html:not(.js-enabled) .preloader { display: none; }
 .mission__type em { color: var(--violet-300); }
 
 .word-mask { display: inline-block; overflow: hidden; vertical-align: bottom; padding-bottom: 0.06em; }
-.word { display: inline-block; will-change: transform, opacity, filter; }
+.word { display: inline-block; }
 .word--accent { color: var(--violet-300); }
 
 .mission__body {
@@ -978,7 +961,7 @@ html:not(.js-enabled) .preloader { display: none; }
   height: 1.04em;
   vertical-align: bottom;
 }
-.stat__num .d__strip { display: block; will-change: transform; }
+.stat__num .d__strip { display: block; }
 .stat__num .d__strip i {
   display: block;
   height: 1.04em;
