@@ -163,88 +163,109 @@
   function initPreloader(done) {
     var pre = $("#preloader");
     var count = $("#preCount");
+    var what = $("#preWhat");
     var bar = $("#preBar");
+    var settled = false;
 
-    if (!pre || REDUCED) {
-      if (pre) pre.style.display = "none";
+    function release() {
+      if (settled) return;
+      settled = true;
       document.body.classList.remove("is-locked");
+      /* Removed rather than hidden: a hidden preloader can still paint. */
+      if (pre && pre.parentNode) pre.parentNode.removeChild(pre);
+      if (window.ScrollTrigger) ScrollTrigger.refresh();
       done();
-      return;
     }
+
+    if (!pre || REDUCED) { release(); return; }
 
     document.body.classList.add("is-locked");
 
-    var state = { v: 0 };
-    var settled = false;
+    var jobs = [];
 
-    var counter = gsap.to(state, {
-      v: 100,
-      duration: 2.1,
-      ease: "power2.inOut",
-      onUpdate: function () {
-        var n = Math.round(state.v);
-        count.textContent = (n < 10 ? "00" : n < 100 ? "0" : "") + n;
-        bar.style.transform = "scaleX(" + (state.v / 100) + ")";
-      }
+    /* Every scene, decoded far enough to play without stalling. The hero used
+       to be preload="metadata", which fetches headers and no video, so it could
+       still be blank when the curtain lifted. */
+    $$("video").forEach(function (v) {
+      jobs.push({
+        label: "scene",
+        p: new Promise(function (res) {
+          if (v.readyState >= 3) return res();
+          v.addEventListener("canplaythrough", res, { once: true });
+          v.addEventListener("loadeddata", function () { if (v.readyState >= 3) res(); });
+          v.addEventListener("error", res, { once: true, capture: true });
+          try { v.load(); } catch (e) { res(); }
+        })
+      });
     });
 
-    function finish() {
-      if (settled) return;
-      settled = true;
-
-      var tl = gsap.timeline({
-        onComplete: function () {
-          pre.classList.add("is-done");
-          pre.style.display = "none";
-          document.body.classList.remove("is-locked");
-          ScrollTrigger.refresh();
-          done();
-        }
+    /* Artwork. These are loading="lazy" and the gate scroll-locks the body, so
+       one below the fold would never come into range: promote it for now. */
+    $$("img").forEach(function (im) {
+      jobs.push({
+        label: "artwork",
+        p: new Promise(function (res) {
+          if (im.complete && im.naturalWidth) return res();
+          im.loading = "eager";
+          if (im.decode) { im.decode().then(res).catch(res); }
+          im.addEventListener("load", res, { once: true });
+          im.addEventListener("error", res, { once: true });
+        })
       });
+    });
 
-      tl.to(state, {
-        v: 100,
-        duration: 0.4,
-        ease: "power2.out",
-        onUpdate: function () {
-          var n = Math.round(state.v);
-          count.textContent = (n < 10 ? "00" : n < 100 ? "0" : "") + n;
-          bar.style.transform = "scaleX(" + (state.v / 100) + ")";
-        }
-      })
-        .to([count, $(".preloader__label")], { opacity: 0, duration: 0.4, ease: EASE.out }, "+=0.1")
-        .to(bar, { scaleX: 1, duration: 0.5, ease: EASE.inOut }, "<")
-        .to(pre, {
-          clipPath: "inset(0 0 100% 0)",
-          duration: 1.1,
-          ease: "power4.inOut"
-        }, "-=0.1");
+    jobs.push({
+      label: "fonts",
+      p: (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve()
+    });
+
+    var total = jobs.length;
+    var loaded = 0;
+    var shown = 0;
+
+    function paint() {
+      if (count) count.textContent = Math.round(shown);
+      if (bar) bar.style.transform = "scaleX(" + (shown / 100) + ")";
+    }
+    paint();
+
+    var ticker = window.setInterval(function () {
+      var target = (loaded / total) * 100;
+      shown += (target - shown) * 0.18;
+      if (target - shown < 0.6) shown = target;
+      paint();
+    }, 40);
+
+    jobs.forEach(function (job) {
+      job.p.then(function () {
+        loaded++;
+        if (what) what.textContent = loaded >= total ? "ready" : job.label;
+      });
+    });
+
+    function exit() {
+      window.clearInterval(ticker);
+      shown = 100;
+      paint();
+      if (what) what.textContent = "ready";
+
+      gsap.timeline({ onComplete: release })
+        .to([count, what, $(".preloader__label")], { opacity: 0, duration: 0.3, ease: EASE.out }, 0.12)
+        .to(pre, { clipPath: "inset(0 0 100% 0)", duration: 0.7, ease: "power4.inOut" }, 0.3);
+
+      /* The release cannot depend on that timeline: a starved ticker would
+         leave the curtain up and the body scroll-locked. release() is
+         idempotent, so whichever path arrives first wins. */
+      window.setTimeout(release, 1100);
     }
 
-    var assets = Promise.all([
-      document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve(),
-      new Promise(function (res) {
-        var v = $("#heroVideo");
-        if (!v) return res();
-        if (v.readyState >= 2) return res();
-        v.addEventListener("loadeddata", res, { once: true });
-        v.addEventListener("error", res, { once: true, capture: true });
-        window.setTimeout(res, 2200);
-      })
-    ]);
-
-    // Hard timeout: a slow connection can never trap a visitor.
-    var hard = window.setTimeout(finish, 2600);
-
-    assets.then(function () {
-      if (counter.progress() > 0.55) finish();
-      else counter.eventCallback("onComplete", finish);
+    Promise.all(jobs.map(function (x) { return x.p; })).then(function () {
+      window.setTimeout(exit, 220);
     });
 
-    counter.eventCallback("onComplete", function () {
-      window.clearTimeout(hard);
-      finish();
-    });
+    /* A stalled asset must never trap anyone. */
+    window.setTimeout(exit, 14000);
+    window.setTimeout(release, 16000);
   }
 
   /* ─────────────────────────────────────────────── 6 · CURSOR ── */
