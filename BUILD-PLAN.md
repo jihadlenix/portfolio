@@ -673,7 +673,7 @@ No stock photography. Each card's visual is a **generated abstract**: an SVG vio
 
 ## 14.5 Links
 
-Each card carries a small `↗` affordance linking to **LinkedIn** — `https://www.linkedin.com/in/jihad-masarani-13631b225/` — where the project posts, screenshots, and write-ups live. A single line above the grid states this plainly: *"Full write-ups, screenshots, and build posts live on LinkedIn."*
+Each card carries a small `↗` affordance linking to **LinkedIn** — `https://www.linkedin.com/in/jihad-maasarani` — where the project posts, screenshots, and write-ups live. A single line above the grid states this plainly: *"Full write-ups, screenshots, and build posts live on LinkedIn."*
 
 ## 14.6 Motion
 
@@ -749,7 +749,7 @@ SECONDARY ROW:
 ## 16.4 CTA behaviour
 
 - **Primary:** `mailto:jihadismasarani@gmail.com?subject=Let%27s%20talk%20%E2%80%94%20automation%20%26%20AI%20systems`. On click, also copy the address to the clipboard and show a small `COPIED` toast in violet for 2s — so the CTA works even for a visitor with no mail client configured. This is why email is the primary CTA: it is the lowest-friction, highest-intent action for a hiring conversation, and it needs no third-party booking tool.
-- **Secondary:** LinkedIn opens `https://www.linkedin.com/in/jihad-masarani-13631b225/` in a new tab with `rel="noopener noreferrer"`.
+- **Secondary:** LinkedIn opens `https://www.linkedin.com/in/jihad-maasarani` in a new tab with `rel="noopener noreferrer"`.
 - The phone number is a `tel:` link on mobile, plain text on desktop.
 
 ## 16.5 Motion
@@ -1257,7 +1257,7 @@ Chrome/Edge 110+, Firefox 110+, Safari 16.4+. Graceful degradation below: the si
 | Email | `jihadismasarani@gmail.com` |
 | Phone | `+961 71 919 075` |
 | Location | Beirut, Lebanon |
-| LinkedIn | `https://www.linkedin.com/in/jihad-masarani-13631b225/` |
+| LinkedIn | `https://www.linkedin.com/in/jihad-maasarani` |
 | CV | `assets/docs/Jihad_Maasarani_Resume_2026.pdf` |
 | Identity reference | `assets/reference/jihad-identity-reference.png` |
 
